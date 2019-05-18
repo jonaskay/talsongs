@@ -9,7 +9,7 @@ import (
 func match(pattern string, e *colly.HTMLElement) (path string, err error) {
 	path = e.Attr("href")
 
-	m, err := regexp.MatchString(`\A\/archive\?page=\d+\z`, path)
+	m, err := regexp.MatchString(pattern, path)
 	if !m {
 		return "", err
 	}
@@ -22,4 +22,8 @@ func Index(e *colly.HTMLElement) (path string, err error) {
 
 func Episode(e *colly.HTMLElement) (path string, err error) {
 	return match(`\A\/\d+\/\S+\z`, e)
+}
+
+func Itunes(e *colly.HTMLElement) (url string, err error) {
+	return match(`\Ahttps:\/\/itunes.apple.com`, e)
 }

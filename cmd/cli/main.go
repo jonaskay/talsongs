@@ -79,6 +79,16 @@ func main() {
 		url := baseUrl + paths[i]
 		c := colly.NewCollector()
 
+		c.OnHTML("a[href]", func(e *colly.HTMLElement) {
+			itunesLink, err := link.Itunes(e)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if itunesLink != "" {
+				fmt.Println(itunesLink)
+			}
+		})
+
 		c.OnRequest(func(r *colly.Request) {
 			fmt.Println("Visiting", r.URL)
 		})
