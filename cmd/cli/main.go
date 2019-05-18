@@ -7,6 +7,7 @@ import (
 
 	"github.com/gocolly/colly"
 	"github.com/jonaskay/talsongs/episodes"
+	"github.com/jonaskay/talsongs/link"
 )
 
 func visitIndexPage(url string) {
@@ -30,27 +31,6 @@ func visitIndexPage(url string) {
 	c.Visit(url)
 }
 
-func indexPageLink(e *colly.HTMLElement) (link string, err error) {
-	path := e.Attr("href")
-
-	m, err := regexp.MatchString(`\A\/archive\?page=\d+\z`, path)
-	if !m {
-		return "", err
-	} else {
-		return path, err
-	}
-}
-
-func episodePageLink(e *colly.HTMLElement) (link string, err error) {
-	path := e.Attr("href")
-
-	m, err := regexp.MatchString(`\A\/\d+\/\S+\z`, path)
-	if !m {
-		return "", err
-	}
-	return path, err
-}
-
 func main() {
 	var paths episodes.Episodes
 	baseUrl := "https://www.thisamericanlife.org"
@@ -68,7 +48,7 @@ func main() {
 		})
 
 		c.OnHTML("a[href]", func(e *colly.HTMLElement) {
-			indexLink, err := indexPageLink(e)
+			indexLink, err := link.Index(e)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -76,7 +56,7 @@ func main() {
 				lastPage = false
 			}
 
-			episodeLink, err := episodePageLink(e)
+			episodeLink, err := link.Episode(e)
 			if err != nil {
 				log.Fatal(err)
 			}
