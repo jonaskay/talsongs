@@ -74,14 +74,19 @@ func main() {
 		url := baseUrl + paths[i]
 		c := colly.NewCollector()
 
-		c.OnHTML("a[href]", func(e *colly.HTMLElement) {
-			itunesLink, err := link.Itunes(e)
-			if err != nil {
-				log.Fatal(err)
-			}
-			if itunesLink != "" {
-				fmt.Println(itunesLink)
-			}
+		c.OnHTML("div.field-name-field-song", func(e *colly.HTMLElement) {
+			e.ForEach("div", func(i int, e *colly.HTMLElement) {
+				if e.Name == "div" {
+					e.ForEach("div", func(j int, e *colly.HTMLElement) {
+						var url string
+						e.ForEach("a[href]", func(k int, e *colly.HTMLElement) {
+							url = e.Attr("href")
+						})
+
+						fmt.Printf("%s %s\n", e.Text, url)
+					})
+				}
+			})
 		})
 
 		c.Visit(url)
