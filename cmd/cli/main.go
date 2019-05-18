@@ -29,22 +29,31 @@ func visitIndexPage(url string) {
 	c.Visit(url)
 }
 
-func indexPageLink(e *colly.HTMLElement) (match bool, err error) {
-	link := e.Attr("href")
-	return regexp.MatchString(`\A\/archive\?page=\d+\z`, link)
+func indexPageLink(e *colly.HTMLElement) (link string, err error) {
+	path := e.Attr("href")
+
+	m, err := regexp.MatchString(`\A\/archive\?page=\d+\z`, path)
+	if !m {
+		return "", err
+	} else {
+		return path, err
+	}
 }
 
-func episodeLink(e *colly.HTMLElement) (match bool, err error) {
-	link := e.Attr("href")
+func episodePageLink(e *colly.HTMLElement) (link string, err error) {
+	path := e.Attr("href")
 
-	m, err := regexp.MatchString(`\A\/\d+\/\S+\z`, link)
-	if m {
-		fmt.Printf("Link found: %q -> %s\n", e.Text, link)
+	m, err := regexp.MatchString(`\A\/\d+\/\S+\z`, path)
+	if !m {
+		return "", err
 	}
-	return m, err
+	fmt.Printf("Link found: %q -> %s\n", e.Text, path)
+	return path, err
 }
 
 func main() {
+	var episodes []string
+
 	i := 1
 	baseUrl := "https://www.thisamericanlife.org/archive"
 	url := baseUrl
@@ -58,16 +67,21 @@ func main() {
 		})
 
 		c.OnHTML("a[href]", func(e *colly.HTMLElement) {
-			indexPage, err := indexPageLink(e)
+			indexLink, err := indexPageLink(e)
 			if err != nil {
 				log.Fatal(err)
 			}
-			if indexPage {
+			if indexLink != "" {
 				lastPage = false
 			}
 
-			episodeLink(e)
-
+			episodeLink, err := episodePageLink(e)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if episodeLink != "" {
+				episodes = append(episodes, episodeLink)
+			}
 		})
 
 		c.OnResponse(func(r *colly.Response) {
