@@ -24,10 +24,6 @@ func visitIndexPage(url string) {
 		}
 	})
 
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL)
-	})
-
 	c.Visit(url)
 }
 
@@ -35,6 +31,7 @@ func main() {
 	var paths episodes.Episodes
 	baseUrl := "https://www.thisamericanlife.org"
 
+	fmt.Println("Fetching episode links...")
 	i := 1
 	archive := fmt.Sprintf("%s/archive", baseUrl)
 	url := archive
@@ -42,10 +39,6 @@ func main() {
 	for !lastPage {
 		lastPage = true
 		c := colly.NewCollector()
-
-		c.OnRequest(func(r *colly.Request) {
-			fmt.Println("Visiting", r.URL)
-		})
 
 		c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 			indexLink, err := link.Index(e)
@@ -73,7 +66,9 @@ func main() {
 
 		i++
 	}
+	fmt.Println("Finished fetching episode links!")
 
+	fmt.Println("Fetching songs...")
 	paths = paths.Unique()
 	for i := 0; i < len(paths); i++ {
 		url := baseUrl + paths[i]
@@ -89,10 +84,8 @@ func main() {
 			}
 		})
 
-		c.OnRequest(func(r *colly.Request) {
-			fmt.Println("Visiting", r.URL)
-		})
-
 		c.Visit(url)
 	}
+	fmt.Println("Finished fetchings songs!")
+
 }
