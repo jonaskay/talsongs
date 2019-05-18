@@ -6,6 +6,7 @@ import (
 	"regexp"
 
 	"github.com/gocolly/colly"
+	"github.com/jonaskay/talsongs/episodes"
 )
 
 func visitIndexPage(url string) {
@@ -47,16 +48,16 @@ func episodePageLink(e *colly.HTMLElement) (link string, err error) {
 	if !m {
 		return "", err
 	}
-	fmt.Printf("Link found: %q -> %s\n", e.Text, path)
 	return path, err
 }
 
 func main() {
-	var episodes []string
+	var paths episodes.Episodes
+	baseUrl := "https://www.thisamericanlife.org"
 
 	i := 1
-	baseUrl := "https://www.thisamericanlife.org/archive"
-	url := baseUrl
+	archive := fmt.Sprintf("%s/archive", baseUrl)
+	url := archive
 	lastPage := false
 	for !lastPage {
 		lastPage = true
@@ -80,16 +81,28 @@ func main() {
 				log.Fatal(err)
 			}
 			if episodeLink != "" {
-				episodes = append(episodes, episodeLink)
+				paths = append(paths, episodeLink)
 			}
 		})
 
 		c.OnResponse(func(r *colly.Response) {
-			url = fmt.Sprintf("%s?page=%d", baseUrl, i)
+			url = fmt.Sprintf("%s?page=%d", archive, i)
 		})
 
 		c.Visit(url)
 
 		i++
+	}
+
+	paths = paths.Unique()
+	for i := 0; i < len(paths); i++ {
+		url := baseUrl + paths[i]
+		c := colly.NewCollector()
+
+		c.OnRequest(func(r *colly.Request) {
+			fmt.Println("Visiting", r.URL)
+		})
+
+		c.Visit(url)
 	}
 }
